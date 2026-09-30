@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { EnvConfiguration } from './config/env.config';
 import { DatabaseModule } from './database/database.module';
 import { JoiValidationSchema } from './config/joi.validation';
+import { FilmModule } from './film/film.module';
 
 @Module({
   imports: [ConfigModule.forRoot({
@@ -15,6 +16,7 @@ import { JoiValidationSchema } from './config/joi.validation';
   }),
   DatabaseModule,
   AuthModule,
+  FilmModule,
   ],
   controllers: [AppController],
   providers: [AppService],
