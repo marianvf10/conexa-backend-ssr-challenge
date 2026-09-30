@@ -1,7 +1,17 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateFilmDto } from './dto/create-film.dto';
 import { UpdateFilmDto } from './dto/update-film.dto';
-import { HttpClient } from '@nestjs/http-client';
+import {
+  HttpClient,
+  HttpClientError,
+  HttpResponseError,
+  HttpTimeoutError,
+} from '@nestjs/http-client';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Film } from './entities/film.entity';
@@ -17,6 +27,8 @@ interface SwapiPage<T> {
 
 @Injectable()
 export class FilmService {
+  private readonly logger = new Logger(FilmService.name);
+
   constructor(
     @InjectRepository(Film)
     private readonly filmRepository: Repository<Film>,
@@ -27,19 +39,23 @@ export class FilmService {
     const newFilm = this.filmRepository.create({
       swapiId: null,
       url: null,
+      ...createFilmDto,
+      // las fechas las maneja siempre el servidor
       created: now,
       edited: now,
-      ...createFilmDto,
     });
     await this.filmRepository.save(newFilm);
     return newFilm;
   }
 
   async findOne(id: string) {
-    return await this.filmRepository.findOneBy({ id });
+    const film = await this.filmRepository.findOneBy({ id });
+    if (!film) throw new NotFoundException(`Film ${id} not found`);
+
+    return film;
   }
 
-  async findAll(): Promise<any> {
+  async findAll(): Promise<Film[]> {
     return await this.filmRepository.find();
   }
 
@@ -54,18 +70,14 @@ export class FilmService {
   }
 
   async remove(id: string) {
-    return await this.filmRepository.delete({ id });
+    const result = await this.filmRepository.delete({ id });
+    if (!result.affected) throw new NotFoundException(`Film ${id} not found`);
+
+    return result;
   }
 
   async sincronize(): Promise<{ synced: number }> {
-    const films: SwapiFilm[] = [];
-    let path: string | null = '/films/';
-
-    while (path) {
-      const { data } = await this.http.get<SwapiPage<SwapiFilm>>(path);
-      films.push(...data.results);
-      path = data.next;
-    }
+    const films = await this.fetchSwapiFilms();
 
     if (films.length === 0) return { synced: 0 };
 
@@ -80,5 +92,36 @@ export class FilmService {
     );
 
     return { synced: films.length };
+  }
+
+  // Solo los errores de la API externa se traducen a 502; los de la base siguen su curso
+  private async fetchSwapiFilms(): Promise<SwapiFilm[]> {
+    const films: SwapiFilm[] = [];
+    let path: string | null = '/films/';
+
+    try {
+      while (path) {
+        const { data } = await this.http.get<SwapiPage<SwapiFilm>>(path);
+        films.push(...data.results);
+        path = data.next;
+      }
+    } catch (error) {
+      if (!(error instanceof HttpClientError)) throw error;
+
+      this.logger.error(`Star Wars API request failed: ${error.message}`);
+      throw new BadGatewayException(this.swapiErrorMessage(error));
+    }
+
+    return films;
+  }
+
+  private swapiErrorMessage(error: HttpClientError): string {
+    if (error instanceof HttpTimeoutError)
+      return 'The Star Wars API did not respond in time. Please try again later.';
+
+    if (error instanceof HttpResponseError)
+      return `The Star Wars API responded with an error (${error.status}). Please try again later.`;
+
+    return 'Could not reach the Star Wars API. Please try again later.';
   }
 }

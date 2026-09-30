@@ -1,6 +1,6 @@
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsArray,
-  IsDateString,
   IsInt,
   IsNotEmpty,
   IsOptional,
@@ -8,6 +8,7 @@ import {
   IsString,
   IsUrl,
 } from 'class-validator';
+import { IsDateOnly } from '../../common/validators/is-date-only.validator';
 
 export class CreateFilmDto {
   @IsOptional()
@@ -35,36 +36,38 @@ export class CreateFilmDto {
   @IsNotEmpty()
   producer: string;
 
-  @IsDateString()
+  @ApiProperty({ example: '1977-05-25', description: 'Format YYYY-MM-DD' })
+  @IsDateOnly()
   release_date: string;
 
   @IsArray()
-  @IsUrl({}, { each: true })
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
   characters: string[];
 
+  
   @IsArray()
-  @IsUrl({}, { each: true })
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
   planets: string[];
 
+
   @IsArray()
-  @IsUrl({}, { each: true })
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
   starships: string[];
 
+
   @IsArray()
-  @IsUrl({}, { each: true })
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
   vehicles: string[];
 
+
   @IsArray()
-  @IsUrl({}, { each: true })
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
   species: string[];
-
-  @IsOptional()
-  @IsDateString()
-  created?: string;
-
-  @IsOptional()
-  @IsDateString()
-  edited?: string;
 
   @IsOptional()
   @IsUrl()
