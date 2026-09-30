@@ -10,4 +10,7 @@ export const JoiValidationSchema = Joi.object({
     DB_NAME: Joi.string().required(),
     JWT_SECRET: Joi.string().required(),
     STAR_WARS_API_URL: Joi.string().uri().required(),
+    ADMIN_EMAIL: Joi.string().email().required(),
+    ADMIN_PASSWORD: Joi.string().min(6).max(50).required(),
+    ADMIN_FULLNAME: Joi.string().min(2).required(),
 });

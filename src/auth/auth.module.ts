@@ -7,6 +7,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { AdminSeedService } from './seed/admin-seed.service';
 
 @Module({
   imports: [
@@ -25,6 +26,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   ],
   exports: [TypeOrmModule, JwtModule, PassportModule, JwtStrategy], // Exporta TypeOrmModule y JwtModule para que otros módulos puedan usarlos si es necesario
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy], // Asegúrate de importar JwtStrategy si lo estás usando
+  providers: [AuthService, JwtStrategy, AdminSeedService], // Asegúrate de importar JwtStrategy si lo estás usando
 })
 export class AuthModule {}
