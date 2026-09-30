@@ -5,6 +5,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Film } from './entities/film.entity';
 import { HttpClientModule } from '@nestjs/http-client';
 import { ConfigService } from '@nestjs/config';
+import {AuthModule} from '../auth/auth.module'
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { ConfigService } from '@nestjs/config';
       }),
       inject: [ConfigService],
     }),
+    AuthModule
   ],
   controllers: [FilmController],
   providers: [FilmService],
